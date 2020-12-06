@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - trackball controls</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+
+	<body>
+		<script type="module">
+			import * as THREE from './three.js-master/build/three.module.js';
+			import Stats from './three.js-master/examples/jsm/libs/stats.module.js';
+			import { GUI } from './three.js-master/examples/jsm/libs/dat.gui.module.js';
+			import { TrackballControls } from './three.js-master/examples/jsm/controls/TrackballControls.js';
+
+			var perspectiveCamera, orthographicCamera, controls, scene, renderer, stats;
+			var frustumSize = 400;
+			let camera;
+      var earthGroup
+      var earthMesh 
+      var sunGroup
+      var sunMesh
+      var L
+      var moonGroup
+      var moonMesh
+	
+			init();
+      animate();
+
+			function init() {
+				var aspect = window.innerWidth / window.innerHeight;
+				perspectiveCamera = new THREE.PerspectiveCamera( 60, aspect, 1, 10000 );
+				perspectiveCamera.position.z = 2000;
+		
+				scene = new THREE.Scene();
+				var texture = new THREE.TextureLoader().load( './textures/bg.jpg' );
+				scene.background = texture
+
+        const earthTexture = new THREE.TextureLoader().load( './textures/earth.jpg' );
+        const moonTexture = new THREE.TextureLoader().load( './textures/moon.jpg' );
+        const sunTexture = new THREE.TextureLoader().load( './textures/sun.jpg' );
+
+        const sunMaterial = new THREE.MeshStandardMaterial({ map: sunTexture })
+        const earthMaterial = new THREE.MeshStandardMaterial({ map: earthTexture})
+        const moonMaterial = new THREE.MeshStandardMaterial({ map: moonTexture })
+      
+        let geometry = new THREE.SphereBufferGeometry(1, 32, 16);
+
+        function createPlanet(scene, mesh, group, x, scale) {
+          mesh.position.set(x, 0, 0);
+          mesh.scale.setScalar(scale);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true; 
+          group.add(mesh);
+          scene.add(group);
+        }
+
+        earthGroup = new THREE.Group();
+        earthMesh = new THREE.Mesh(geometry, earthMaterial);
+        createPlanet(scene, earthMesh, earthGroup, 0, 50);
+        moonGroup = new THREE.Group()
+        moonMesh = new THREE.Mesh(geometry, moonMaterial);
+        createPlanet(scene, moonMesh, moonGroup, 80, 5);
+        sunGroup = new THREE.Group();
+				var Alight = new THREE.AmbientLight( 0x666666 );
+				scene.add( Alight );
+        const sphere = new THREE.SphereBufferGeometry( 100, 32, 16 );
+				L = new THREE.PointLight( 0xffffff, 1.25, 10000 );
+        L.position.x = 1000
+        L.castShadow = true;
+				L.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { map: sunTexture } ) ) );
+				sunGroup.add( L );
+        scene.add(sunGroup)
+        L.shadow.mapSize.width = 5000; // default
+        L.shadow.mapSize.height = 5000; // default
+        L.shadow.camera.far = 1100; 
+				renderer = new THREE.WebGLRenderer();
+        renderer.shadowMap.enabled = true;
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+				window.addEventListener( 'resize', onWindowResize, false );
+				createControls( perspectiveCamera );
+        }
+
+			function createControls( camera ) {
+				controls = new TrackballControls( camera, renderer.domElement );
+				controls.rotateSpeed = 4.0;
+				controls.zoomSpeed = 1.2;
+				controls.panSpeed = 0.8;
+				controls.maxDistance = 5000;
+			}
+
+			function onWindowResize() {
+				var aspect = window.innerWidth / window.innerHeight;
+				perspectiveCamera.aspect = aspect;
+				perspectiveCamera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				controls.handleResize();
+			}
+      var i = 0
+
+      function animate(a) {
+          requestAnimationFrame( animate );
+          controls.update();
+          i++
+          i = i % 3600000
+          stats.update();
+          camera =  perspectiveCamera;
+          sunGroup.rotation.y = i * 0.025
+          moonGroup.rotation.y = i * 0.01 
+          renderer.render( scene, camera );
+      }     
+		</script>
+
+	</body>
+</html>
